@@ -13,6 +13,7 @@ import programmeList from './programme-list/index.js';
 import troisRaisons from './trois-raisons/index.js';
 import formSfmc from './form-sfmc/index.js';
 import carousel from './carousel/index.js';
+import CarrouselTemoignages from './carrousel-temoignages/index.js';
 
 export function registerBlocks(editor) {
     const bm = editor.BlockManager;
@@ -29,7 +30,7 @@ export function registerBlocks(editor) {
         headerEfap, footerEfap, 
         headerBrassart, footerBrassart,
         hero, twoColumn, richText, ctaButton, imageCaption, spacer,
-        horizontalMenu, programmeList, troisRaisons, formSfmc, carousel
+        horizontalMenu, programmeList, troisRaisons, formSfmc, carousel, CarrouselTemoignages
     ].forEach(blockInit => {
         blockInit(editor, categories);
     });
