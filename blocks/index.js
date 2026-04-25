@@ -9,11 +9,15 @@ import ctaButton from './cta-button/index.js';
 import imageCaption from './image-caption/index.js';
 import spacer from './spacer/index.js';
 import horizontalMenu from './horizontal-menu/index.js';
+import bandeRose from './bande-rose/index.js';
 import programmeList from './programme-list/index.js';
+import programmeEditorial from './programme-editorial/index.js';
 import troisRaisons from './trois-raisons/index.js';
 import formSfmc from './form-sfmc/index.js';
 import carousel from './carousel/index.js';
+import chiffresCles from './chiffres-cles/index.js';
 import CarrouselTemoignages from './carrousel-temoignages/index.js';
+
 
 export function registerBlocks(editor) {
     const bm = editor.BlockManager;
@@ -27,11 +31,16 @@ export function registerBlocks(editor) {
 
     // Load all blocks
     [
-        headerEfap, footerEfap, 
+        headerEfap, footerEfap,
         headerBrassart, footerBrassart,
         hero, twoColumn, richText, ctaButton, imageCaption, spacer,
-        horizontalMenu, programmeList, troisRaisons, formSfmc, carousel, CarrouselTemoignages
+
+        horizontalMenu, bandeRose, programmeList, programmeEditorial, troisRaisons, formSfmc, carousel, chiffresCles, CarrouselTemoignages
     ].forEach(blockInit => {
-        blockInit(editor, categories);
+        if (typeof blockInit === 'function') {
+            blockInit(editor, categories);
+        } else {
+            console.warn('Block skipped: The block is missing an export default function()');
+        }
     });
 }

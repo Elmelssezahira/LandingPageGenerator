@@ -4,42 +4,50 @@ export default function(editor, categories) {
         category: categories.BRASSART,
         content: `
             <header class="header-brassart">
-                <div class="header-container">
-                    <div class="logo-tagline">
-                        <img src="assets/brassart-logo.png" alt="BRASSART Logo" class="brassart-logo-img">
-                        <div class="header-tagline-text">L'école des métiers<br>de la création</div>
+                <div class="logo-group">
+                    <div class="brassart-logo-text">BRASSART</div>
+                    <div class="header-tagline">
+                        L'école des métiers<br>de la création
                     </div>
                 </div>
             </header>
             <style>
                 .header-brassart {
-                    background-color: #fff;
-                    padding: 12px 0;
-                    border-bottom: 1px solid #eee;
+                    background-color: #ffffff;
+                    padding: 20px 0;
+                    margin: 0;
+                    display: flex;
+                    align-items: center;
                     font-family: 'Inter', sans-serif;
+                    border-bottom: 1px solid #f0f0f0;
+                    width: 100%;
                 }
-                .header-container {
-                    max-width: 1200px;
-                    margin: 0 auto;
+                .logo-group {
                     display: flex;
-                    align-items: center;
-                    padding: 0 20px;
+                    flex-direction: column;
+                    margin-left: 120px; /* Aligné avec le décalage EFAP */
                 }
-                .logo-tagline {
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
+                .brassart-logo-text {
+                    font-family: Arial Black, Arial, Helvetica, sans-serif;
+                    font-size: 32px;
+                    font-weight: 900;
+                    color: #A8174F;
+                    line-height: 1;
+                    margin-bottom: 5px;
                 }
-                .brassart-logo-img {
-                    height: 25px;
-                }
-                .header-tagline-text {
-                    font-size: 10px;
+                .header-tagline {
+                    font-size: 11px;
                     line-height: 1.2;
-                    color: #C61063;
-                    font-weight: 600;
-                    border-left: 1px solid #eee;
-                    padding-left: 15px;
+                    color: #A8174F;
+                    font-weight: 500;
+                }
+                @media (max-width: 768px) {
+                    .logo-group {
+                        margin-left: 40px;
+                    }
+                    .brassart-logo-text {
+                        font-size: 24px;
+                    }
                 }
             </style>
         `,
