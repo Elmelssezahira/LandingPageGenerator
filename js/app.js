@@ -66,9 +66,42 @@ document.addEventListener('DOMContentLoaded', () => {
     initExport(editor);
     registerBlocks(editor);
 
+    editor.on('load', () => {
+        // If there's no component in the wrapper, it's a new or empty project
+        const wrapper = editor.getWrapper();
+        if (!wrapper || wrapper.components().length === 0) {
+            loadDefaultTemplate(editor);
+        }
+    });
+
     // Global access for debugging
     window.editor = editor;
 });
+
+function loadDefaultTemplate(editor) {
+    editor.setComponents('');
+    editor.setStyle('');
+    
+    // Structure fidèle aux maquettes HubSpot client :
+    // Header → Hero → Programme → 3 Bonnes Raisons → Formulaire → CTA → Footer
+    const defaultBlocks = [
+        'header-brassart',
+        'hero',
+        'horizontal-menu',
+        'programme-list',
+        'trois-raisons',
+        'form-sfmc',
+        'cta-button',
+        'footer-brassart'
+    ];
+    
+    defaultBlocks.forEach(blockId => {
+        const block = editor.BlockManager.get(blockId);
+        if (block) {
+            editor.addComponents(block.get('content'));
+        }
+    });
+}
 
 function initUI(editor) {
     // Device Switcher
@@ -132,6 +165,8 @@ function initUI(editor) {
             editor.setComponents('');
             editor.setStyle('');
             localStorage.removeItem('efap-brassart-builder__currentProject');
+            localStorage.removeItem('efap-brassart-builder__gjsProject');
+            loadDefaultTemplate(editor);
         }
     };
 

@@ -9,6 +9,10 @@ import ctaButton from './cta-button/index.js';
 import imageCaption from './image-caption/index.js';
 import spacer from './spacer/index.js';
 import horizontalMenu from './horizontal-menu/index.js';
+import programmeList from './programme-list/index.js';
+import troisRaisons from './trois-raisons/index.js';
+import formSfmc from './form-sfmc/index.js';
+import carousel from './carousel/index.js';
 
 export function registerBlocks(editor) {
     const bm = editor.BlockManager;
@@ -25,7 +29,7 @@ export function registerBlocks(editor) {
         headerEfap, footerEfap, 
         headerBrassart, footerBrassart,
         hero, twoColumn, richText, ctaButton, imageCaption, spacer,
-        horizontalMenu
+        horizontalMenu, programmeList, troisRaisons, formSfmc, carousel
     ].forEach(blockInit => {
         blockInit(editor, categories);
     });
