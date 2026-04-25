@@ -4,39 +4,45 @@ export default function(editor, categories) {
         category: categories.EFAP,
         content: `
             <header class="header-efap">
-                <div class="header-container">
-                    <img src="assets/efap-logo.png" alt="EFAP Logo" class="efap-logo-img">
-                    <button class="btn-en-minimal">EN</button>
-                </div>
+                <div class="efap-logo">E|F|A|P</div>
+                <div class="efap-lang">EN</div>
             </header>
             <style>
                 .header-efap {
                     background-color: #1a1a1a;
-                    padding: 12px 0;
-                    font-family: 'Inter', sans-serif;
-                }
-                .header-container {
-                    max-width: 1200px;
-                    margin: 0 auto;
+                    padding: 18px 0; /* Collé au bord gauche */
+                    margin: 0;
                     display: flex;
-                    justify-content: space-between;
                     align-items: center;
-                    padding: 0 20px;
+                    justify-content: space-between;
+                    border-bottom: 2px solid #c9a96e;
+                    font-family: 'Georgia', 'Times New Roman', serif;
+                    width: 100%;
                 }
-                .efap-logo-img {
-                    height: 22px;
+                .efap-logo {
+                    font-size: 22px;
+                    letter-spacing: 10px;
+                    color: #ffffff;
+                    font-weight: 400;
+                    margin-left: 120px; /* Décalage des lettres vers la droite */
                 }
-                .btn-en-minimal {
-                    background: transparent;
-                    border: none;
-                    color: #fff;
-                    font-size: 10px;
-                    font-weight: 700;
+                .efap-lang {
+                    font-size: 13px;
+                    color: #ffffff;
+                    font-weight: 400;
+                    letter-spacing: 2px;
                     cursor: pointer;
-                    opacity: 0.8;
+                    margin-right: 20px;
                 }
-                .btn-en-minimal:hover {
-                    opacity: 1;
+                @media (max-width: 768px) {
+                    .header-efap {
+                        padding: 14px 0;
+                    }
+                    .efap-logo {
+                        font-size: 17px;
+                        letter-spacing: 6px;
+                        margin-left: 40px;
+                    }
                 }
             </style>
         `,

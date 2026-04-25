@@ -3,69 +3,125 @@ export default function(editor, categories) {
         label: 'Horizontal Menu',
         category: categories.ESSENTIAL,
         content: `
-            <nav class="horizontal-nav-bar">
-                <div class="nav-scroll-container">
-                    <ul class="nav-links-list">
-                        <li><a href="#section-brassart" class="nav-item">POURQUOI BRASSART</a></li>
-                        <li><a href="#section-programmes" class="nav-item">PROGRAMMES</a></li>
-                        <li><a href="#section-metiers" class="nav-item">MÉTIERS</a></li>
-                        <li><a href="#section-insertion" class="nav-item">INSERTION PROFESSIONNELLE</a></li>
-                        <li><a href="#section-reconnaissance" class="nav-item">RECONNAISSANCE</a></li>
-                        <li><a href="#section-pedagogie" class="nav-item">PÉDAGOGIE</a></li>
-                        <li><a href="#section-international" class="nav-item">INTERNATIONAL</a></li>
-                        <li><a href="#section-evenements" class="nav-item">ÉVÉNEMENTS</a></li>
-                        <li><a href="#section-campus" class="nav-item">CAMPUS</a></li>
-                        <li><a href="#section-admission" class="nav-item">ADMISSION</a></li>
-                        <li><a href="#section-faq" class="nav-item">FOIRE AUX QUESTIONS</a></li>
-                    </ul>
-                </div>
-            </nav>
+            <div class="hm-wrapper">
+                <div class="hm-band-top"></div>
+                <nav class="hm-nav-bar">
+                    <div class="hm-scroll-container">
+                        <ul class="hm-nav-list">
+                            <li><a href="#pourquoi-brassart" class="hm-nav-item">Pourquoi BRASSART</a></li>
+                            <li><a href="#programmes" class="hm-nav-item">Programmes</a></li>
+                            <li><a href="#metiers" class="hm-nav-item">Métiers</a></li>
+                            <li><a href="#insertion-professionnelle" class="hm-nav-item">Insertion professionnelle</a></li>
+                            <li><a href="#reconnaissance" class="hm-nav-item">Reconnaissance</a></li>
+                            <li><a href="#pedagogie" class="hm-nav-item">Pédagogie</a></li>
+                            <li><a href="#international" class="hm-nav-item">International</a></li>
+                            <li><a href="#evenements" class="hm-nav-item">Événements</a></li>
+                            <li><a href="#campus" class="hm-nav-item">Campus</a></li>
+                            <li><a href="#admission" class="hm-nav-item">Admission</a></li>
+                            <li><a href="#faq" class="hm-nav-item">Foire aux questions</a></li>
+                        </ul>
+                    </div>
+                </nav>
+                <div class="hm-band-bottom"></div>
+            </div>
             <style>
-                .horizontal-nav-bar {
-                    background-color: #fff;
-                    border-top: 4px solid #C61063;
-                    border-bottom: 4px solid #C61063;
+                .hm-wrapper {
+                    width: 100%;
+                    position: relative;
+                    /* Ajout de coins arrondis si c'est un bloc isolé comme sur l'image */
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                }
+                .hm-band-top {
+                    width: 100%;
+                    height: 45px;
+                    background-color: #A8174F;
+                }
+                .hm-band-bottom {
+                    display: none; /* Masqué sur Desktop */
+                }
+                .hm-nav-bar {
+                    background-color: #ffffff;
+                    border-bottom: 1px solid #eaeaea;
                     position: sticky;
                     top: 0;
                     z-index: 999;
-                    font-family: 'Inter', sans-serif;
+                    font-family: 'Inter', Arial, sans-serif;
                 }
-                .nav-scroll-container {
-                    max-width: 1200px;
-                    margin: 0 auto;
+                .hm-scroll-container {
+                    width: 100%;
                     overflow-x: auto;
-                    white-space: nowrap;
+                    padding: 15px 10px; /* Laisse 10px par rapport au début */
                     -webkit-overflow-scrolling: touch;
-                    padding: 10px 0;
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
                 }
-                .nav-scroll-container::-webkit-scrollbar {
+                .hm-scroll-container::-webkit-scrollbar {
                     display: none;
                 }
-                .nav-links-list {
+                .hm-nav-list {
                     display: flex;
+                    justify-content: flex-start;
+                    align-items: center;
                     list-style: none;
                     margin: 0;
-                    padding: 0 20px;
-                    gap: 25px;
+                    padding: 0;
+                    gap: 20px; /* Espace entre les éléments */
                 }
-                .nav-item {
-                    color: #333;
+                .hm-nav-list li {
+                    display: flex;
+                    align-items: center;
+                    flex-shrink: 0;
+                }
+                .hm-nav-item {
+                    color: #000000;
                     text-decoration: none;
                     font-size: 11px;
                     font-weight: 800;
                     text-transform: uppercase;
-                    transition: color 0.2s;
+                    transition: color 0.3s ease;
                     display: block;
+                    position: relative;
+                    padding-bottom: 4px;
                 }
-                .nav-item:hover {
-                    color: #C61063;
+                /* Hover effect */
+                .hm-nav-item::after {
+                    content: '';
+                    position: absolute;
+                    width: 0;
+                    height: 2px;
+                    bottom: 0;
+                    left: 0;
+                    background-color: #A8174F;
+                    transition: width 0.3s ease;
+                }
+                .hm-nav-item:hover {
+                    color: #A8174F;
+                }
+                .hm-nav-item:hover::after {
+                    width: 100%;
                 }
                 @media (max-width: 768px) {
-                    .nav-links-list {
-                        gap: 20px;
+                    /* On affiche la bande du bas sur mobile */
+                    .hm-band-bottom {
+                        display: block;
+                        width: 100%;
+                        height: 45px;
+                        background-color: #A8174F;
                     }
-                    .nav-item {
-                        font-size: 13px;
+                    /* Espacement mobile */
+                    .hm-nav-list {
+                        gap: 25px; 
+                    }
+                    /* N'afficher que Pourquoi BRASSART et Programmes sur mobile */
+                    .hm-nav-list li:nth-child(n+3) {
+                        display: none;
+                    }
+                    .hm-nav-item {
+                        font-size: 14px;
+                        text-transform: none; /* Titre normal sur mobile */
+                        font-weight: 600;
                     }
                 }
             </style>

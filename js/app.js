@@ -87,6 +87,7 @@ function loadDefaultTemplate(editor) {
     const defaultBlocks = [
         'header-brassart',
         'hero',
+        'bande-rose',
         'horizontal-menu',
         'programme-list',
         'trois-raisons',
