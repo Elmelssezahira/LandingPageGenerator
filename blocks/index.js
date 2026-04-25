@@ -9,7 +9,7 @@ import ctaButton from './cta-button/index.js';
 import imageCaption from './image-caption/index.js';
 import spacer from './spacer/index.js';
 import horizontalMenu from './horizontal-menu/index.js';
-import bandeRose from './horizontal-menu/Bande-Rose/index.js';
+import bandeRose from './bande-rose/index.js';
 import programmeList from './programme-list/index.js';
 import troisRaisons from './trois-raisons/index.js';
 import formSfmc from './form-sfmc/index.js';
