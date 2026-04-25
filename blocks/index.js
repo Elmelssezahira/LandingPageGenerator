@@ -11,9 +11,11 @@ import spacer from './spacer/index.js';
 import horizontalMenu from './horizontal-menu/index.js';
 import bandeRose from './bande-rose/index.js';
 import programmeList from './programme-list/index.js';
+import programmeEditorial from './programme-editorial/index.js';
 import troisRaisons from './trois-raisons/index.js';
 import formSfmc from './form-sfmc/index.js';
 import carousel from './carousel/index.js';
+import chiffresCles from './chiffres-cles/index.js';
 
 export function registerBlocks(editor) {
     const bm = editor.BlockManager;
@@ -30,7 +32,7 @@ export function registerBlocks(editor) {
         headerEfap, footerEfap,
         headerBrassart, footerBrassart,
         hero, twoColumn, richText, ctaButton, imageCaption, spacer,
-        horizontalMenu, bandeRose, programmeList, troisRaisons, formSfmc, carousel
+        horizontalMenu, bandeRose, programmeList, programmeEditorial, troisRaisons, formSfmc, carousel, chiffresCles
     ].forEach(blockInit => {
         if (typeof blockInit === 'function') {
             blockInit(editor, categories);
