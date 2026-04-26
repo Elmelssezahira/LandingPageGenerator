@@ -105,6 +105,179 @@ function loadDefaultTemplate(editor) {
 }
 
 function initUI(editor) {
+    const modal = document.getElementById('modal-container');
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+    const modalFooter = modal.querySelector('.modal-footer');
+    const modalCloseButton = modal.querySelector('.modal-header .close-modal');
+    const btnCreateBlock = document.getElementById('btn-create-block');
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        modalTitle.textContent = '';
+        modalBody.innerHTML = '';
+        modalFooter.innerHTML = '';
+        modalCloseButton.style.display = '';
+        delete modal.dataset.dismissible;
+    }
+
+    function openModal({
+        title,
+        body = '',
+        actions = [],
+        dismissible = true,
+        onOpen
+    }) {
+        modalTitle.textContent = title;
+        modalBody.innerHTML = body;
+        modalFooter.innerHTML = '';
+        modal.dataset.dismissible = dismissible ? 'true' : 'false';
+        modalCloseButton.style.display = dismissible ? '' : 'none';
+
+        actions.forEach(action => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = action.label;
+            button.className = action.className;
+            button.onclick = () => action.onClick();
+            modalFooter.appendChild(button);
+        });
+
+        modal.classList.remove('hidden');
+
+        if (onOpen) {
+            onOpen();
+        }
+    }
+
+    function showAlert({
+        title = 'Notice',
+        message,
+        confirmLabel = 'OK'
+    }) {
+        return new Promise(resolve => {
+            openModal({
+                title,
+                body: `<p class="modal-message">${message}</p>`,
+                actions: [
+                    {
+                        label: confirmLabel,
+                        className: 'btn-primary',
+                        onClick: () => {
+                            closeModal();
+                            resolve();
+                        }
+                    }
+                ]
+            });
+        });
+    }
+
+    function showConfirm({
+        title = 'Confirm action',
+        message,
+        confirmLabel = 'Continue',
+        cancelLabel = 'Cancel',
+        confirmClassName = 'btn-primary'
+    }) {
+        return new Promise(resolve => {
+            openModal({
+                title,
+                body: `<p class="modal-message">${message}</p>`,
+                actions: [
+                    {
+                        label: cancelLabel,
+                        className: 'btn-secondary',
+                        onClick: () => {
+                            closeModal();
+                            resolve(false);
+                        }
+                    },
+                    {
+                        label: confirmLabel,
+                        className: confirmClassName,
+                        onClick: () => {
+                            closeModal();
+                            resolve(true);
+                        }
+                    }
+                ]
+            });
+        });
+    }
+
+    function showPrompt({
+        title,
+        message,
+        defaultValue = '',
+        placeholder = '',
+        confirmLabel = 'OK',
+        cancelLabel = 'Cancel'
+    }) {
+        return new Promise(resolve => {
+            const inputId = 'modal-prompt-input';
+
+            const submit = () => {
+                const value = document.getElementById(inputId).value.trim();
+                closeModal();
+                resolve(value || null);
+            };
+
+            openModal({
+                title,
+                body: `
+                    <p class="modal-message">${message}</p>
+                    <input
+                        id="${inputId}"
+                        class="modal-input"
+                        type="text"
+                        value="${escapeHtml(defaultValue)}"
+                        placeholder="${escapeHtml(placeholder)}"
+                    >
+                `,
+                actions: [
+                    {
+                        label: cancelLabel,
+                        className: 'btn-secondary',
+                        onClick: () => {
+                            closeModal();
+                            resolve(null);
+                        }
+                    },
+                    {
+                        label: confirmLabel,
+                        className: 'btn-primary',
+                        onClick: submit
+                    }
+                ],
+                onOpen: () => {
+                    const input = document.getElementById(inputId);
+                    input.focus();
+                    input.select();
+                    input.addEventListener('keydown', event => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            submit();
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    modalCloseButton.onclick = closeModal;
+    modal.onclick = event => {
+        if (event.target === modal && modal.dataset.dismissible !== 'false') {
+            closeModal();
+        }
+    };
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !modal.classList.contains('hidden') && modal.dataset.dismissible !== 'false') {
+            closeModal();
+        }
+    });
+
     // Device Switcher
     const deviceDesktop = document.getElementById('device-desktop');
     const deviceTablet = document.getElementById('device-tablet');
@@ -161,8 +334,15 @@ function initUI(editor) {
     };
 
     // New Project
-    document.getElementById('btn-new').onclick = () => {
-        if (confirm('Are you sure? All unsaved changes will be lost.')) {
+    document.getElementById('btn-new').onclick = async () => {
+        const shouldReset = await showConfirm({
+            title: 'Create New Project',
+            message: 'All unsaved changes will be lost. Do you want to start from a fresh landing page?',
+            confirmLabel: 'Start New Project',
+            confirmClassName: 'btn-danger'
+        });
+
+        if (shouldReset) {
             editor.setComponents('');
             editor.setStyle('');
             localStorage.removeItem('efap-brassart-builder__currentProject');
@@ -175,8 +355,14 @@ function initUI(editor) {
     document.getElementById('btn-save').onclick = async () => {
         let projectName = localStorage.getItem('efap-brassart-builder__currentProject');
         
-        // Always ask if they want a new name or use current
-        const newName = prompt('Enter project name:', projectName || 'my-project');
+        const newName = await showPrompt({
+            title: 'Save Project',
+            message: 'Choose the folder name used to save this landing page.',
+            defaultValue: projectName || 'my-project',
+            placeholder: 'my-project',
+            confirmLabel: 'Save Project'
+        });
+
         if (!newName) return;
         
         projectName = newName;
@@ -196,10 +382,16 @@ function initUI(editor) {
                 body: JSON.stringify(projectData)
             });
             const result = await response.json();
-            alert(result.message);
+            await showAlert({
+                title: 'Project Saved',
+                message: result.message
+            });
         } catch (e) {
             console.error('Save failed', e);
-            alert('Error saving project');
+            await showAlert({
+                title: 'Save Failed',
+                message: 'Error saving project'
+            });
         }
     };
 
@@ -207,7 +399,14 @@ function initUI(editor) {
     document.getElementById('btn-preview').onclick = async () => {
         let projectName = localStorage.getItem('efap-brassart-builder__currentProject');
         if (!projectName) {
-            projectName = prompt('Please name your project before previewing:', 'preview-project');
+            projectName = await showPrompt({
+                title: 'Preview Project',
+                message: 'Please name your project before previewing.',
+                defaultValue: 'preview-project',
+                placeholder: 'preview-project',
+                confirmLabel: 'Open Preview'
+            });
+
             if (!projectName) return;
             localStorage.setItem('efap-brassart-builder__currentProject', projectName);
         }
@@ -231,65 +430,75 @@ function initUI(editor) {
             window.open(`/projects/${projectName}/index.html`, '_blank');
         } catch (e) {
             console.error('Preview failed', e);
-            alert('Error preparing preview');
+            await showAlert({
+                title: 'Preview Failed',
+                message: 'Error preparing preview'
+            });
         }
     };
 
     // Custom Block Creator
-    const modal = document.getElementById('modal-container');
-    const modalBody = document.getElementById('modal-body');
-    const modalTitle = document.getElementById('modal-title');
-    const btnCreateBlock = document.getElementById('btn-create-block');
-    const closeModalBtns = document.querySelectorAll('.close-modal');
-
     btnCreateBlock.onclick = () => {
-        modalTitle.innerText = 'Create New Custom Block';
-        modalBody.innerHTML = `
-            <div class="form-group">
-                <label>Block Label</label>
-                <input type="text" id="custom-block-label" placeholder="e.g. My Custom Section">
-            </div>
-            <div class="form-group">
-                <label>HTML Content</label>
-                <textarea id="custom-block-html" rows="5" placeholder="<div>Your HTML here</div>"></textarea>
-            </div>
-            <div class="form-group">
-                <label>CSS Styles (Optional)</label>
-                <textarea id="custom-block-css" rows="3" placeholder=".my-class { color: red; }"></textarea>
-            </div>
-            <button class="btn-primary w-100" id="btn-save-custom-block">Save to Library</button>
-        `;
-        modal.classList.remove('hidden');
+        openModal({
+            title: 'Create New Custom Block',
+            body: `
+                <div class="form-group">
+                    <label>Block Label</label>
+                    <input type="text" id="custom-block-label" placeholder="e.g. My Custom Section">
+                </div>
+                <div class="form-group">
+                    <label>HTML Content</label>
+                    <textarea id="custom-block-html" rows="5" placeholder="<div>Your HTML here</div>"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>CSS Styles (Optional)</label>
+                    <textarea id="custom-block-css" rows="3" placeholder=".my-class { color: red; }"></textarea>
+                </div>
+                <p id="custom-block-error" class="modal-hint is-error hidden">Label and HTML are required.</p>
+            `,
+            actions: [
+                {
+                    label: 'Cancel',
+                    className: 'btn-secondary',
+                    onClick: closeModal
+                },
+                {
+                    label: 'Save to Library',
+                    className: 'btn-primary',
+                    onClick: () => {
+                        const label = document.getElementById('custom-block-label').value.trim();
+                        const html = document.getElementById('custom-block-html').value.trim();
+                        const css = document.getElementById('custom-block-css').value;
+                        const error = document.getElementById('custom-block-error');
 
-        document.getElementById('btn-save-custom-block').onclick = () => {
-            const label = document.getElementById('custom-block-label').value;
-            const html = document.getElementById('custom-block-html').value;
-            const css = document.getElementById('custom-block-css').value;
+                        if (!(label && html)) {
+                            error.classList.remove('hidden');
+                            return;
+                        }
 
-            if (label && html) {
-                const content = `${html}<style>${css}</style>`;
-                editor.BlockManager.add(`custom-${Date.now()}`, {
-                    label,
-                    content,
-                    category: 'Custom Blocks',
-                    attributes: { class: 'gjs-fonts gjs-f-b1' }
-                });
-                
-                // Persistence for custom blocks
-                const customBlocks = JSON.parse(localStorage.getItem('efap-brassart-builder__customBlocks') || '[]');
-                customBlocks.push({ label, html, css });
-                localStorage.setItem('efap-brassart-builder__customBlocks', JSON.stringify(customBlocks));
+                        error.classList.add('hidden');
 
-                modal.classList.add('hidden');
-            } else {
-                alert('Label and HTML are required');
+                        const content = `${html}<style>${css}</style>`;
+                        editor.BlockManager.add(`custom-${Date.now()}`, {
+                            label,
+                            content,
+                            category: 'Custom Blocks',
+                            attributes: { class: 'gjs-fonts gjs-f-b1' }
+                        });
+                        
+                        const customBlocks = JSON.parse(localStorage.getItem('efap-brassart-builder__customBlocks') || '[]');
+                        customBlocks.push({ label, html, css });
+                        localStorage.setItem('efap-brassart-builder__customBlocks', JSON.stringify(customBlocks));
+
+                        closeModal();
+                    }
+                }
+            ],
+            onOpen: () => {
+                document.getElementById('custom-block-label').focus();
             }
-        };
+        });
     };
-
-    closeModalBtns.forEach(btn => {
-        btn.onclick = () => modal.classList.add('hidden');
-    });
 
     // Load custom blocks on start
     const savedCustomBlocks = JSON.parse(localStorage.getItem('efap-brassart-builder__customBlocks') || '[]');
@@ -301,4 +510,13 @@ function initUI(editor) {
             attributes: { class: 'gjs-fonts gjs-f-b1' }
         });
     });
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
