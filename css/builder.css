@@ -485,7 +485,13 @@ body {
     border-radius: var(--radius-lg) !important;
     width: calc(50% - 6px) !important;
     margin: 3px !important;
-    padding: 14px 8px !important;
+    padding: 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    min-height: 156px !important;
     transition: all var(--transition) !important;
     cursor: grab !important;
     box-shadow: var(--shadow-sm) !important;
@@ -512,6 +518,10 @@ body {
 .gjs-block-label {
     font-size: 12px !important;
     font-weight: 500 !important;
+    color: var(--text-main) !important;
+    line-height: 1.35 !important;
+    text-align: left !important;
+    white-space: normal !important;
 }
 
 .gjs-block svg {
@@ -520,6 +530,43 @@ body {
 
 .gjs-block:hover svg {
     fill: var(--accent) !important;
+}
+
+.gjs-block .gjs-block-media {
+    width: 100% !important;
+    margin: 0 !important;
+    display: block !important;
+}
+
+.block-thumbnail {
+    width: 100%;
+}
+
+.block-thumbnail__frame {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    border: 1px solid rgba(201, 184, 122, 0.12);
+    background:
+        linear-gradient(180deg, rgba(219, 227, 223, 0.98) 0%, rgba(203, 214, 210, 0.96) 100%);
+    overflow: hidden;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.42),
+        0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.block-thumbnail__image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.gjs-block:hover .block-thumbnail__frame {
+    border-color: rgba(201, 184, 122, 0.22);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 /* ═══════════════════════════════════════

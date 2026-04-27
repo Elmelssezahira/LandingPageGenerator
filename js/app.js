@@ -2,6 +2,30 @@ import { initStorage } from './storage.js';
 import { initExport } from './export.js';
 import { registerBlocks } from '../blocks/index.js';
 
+const BLOCK_THUMBNAILS = {
+    'header-efap': 'assets/block-thumbnails/header-efap.svg',
+    'header-brassart': 'assets/block-thumbnails/header-brassart.svg',
+    'footer-efap': 'assets/block-thumbnails/footer-efap.svg',
+    'footer-brassart': 'assets/block-thumbnails/footer-brassart.svg',
+    hero: 'assets/block-thumbnails/hero.svg',
+    'two-column': 'assets/block-thumbnails/two-column.svg',
+    'rich-text': 'assets/block-thumbnails/rich-text.svg',
+    'cta-button': 'assets/block-thumbnails/cta-button.svg',
+    'image-caption': 'assets/block-thumbnails/image-caption.svg',
+    spacer: 'assets/block-thumbnails/spacer.svg',
+    'horizontal-menu': 'assets/block-thumbnails/horizontal-menu.svg',
+    'bande-rose': 'assets/block-thumbnails/bande-rose.svg',
+    'programme-list': 'assets/block-thumbnails/programme-list.svg',
+    'programme-editorial': 'assets/block-thumbnails/programme-editorial.svg',
+    'trois-raisons': 'assets/block-thumbnails/trois-raisons.svg',
+    'form-sfmc': 'assets/block-thumbnails/form-sfmc.svg',
+    'chiffres-cles': 'assets/block-thumbnails/chiffres-cles.svg',
+    Carrousel: 'assets/block-thumbnails/carrousel.svg',
+    CarrouselTemoignages: 'assets/block-thumbnails/carrousel-temoignages.svg',
+    CarrouselCampus: 'assets/block-thumbnails/carrousel-campus.svg',
+    default: 'assets/block-thumbnails/default.svg'
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const editor = grapesjs.init({
         container: '#gjs',
@@ -60,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Custom UI Logic
     initUI(editor);
+    initBlockThumbnailMedia(editor);
     
     // Register Modules
     initStorage(editor);
@@ -77,6 +102,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Global access for debugging
     window.editor = editor;
 });
+
+function initBlockThumbnailMedia(editor) {
+    const blockManager = editor.BlockManager;
+    const originalAdd = blockManager.add.bind(blockManager);
+
+    blockManager.add = (id, properties = {}) => {
+        const label = properties.label || id;
+        const thumbnail = BLOCK_THUMBNAILS[id] || BLOCK_THUMBNAILS.default;
+
+        if (!properties.media) {
+            properties.media = `
+                <div class="block-thumbnail">
+                    <div class="block-thumbnail__frame">
+                        <img class="block-thumbnail__image" src="${escapeHtml(thumbnail)}" alt="${escapeHtml(label)}">
+                    </div>
+                </div>
+            `;
+        }
+
+        return originalAdd(id, properties);
+    };
+}
 
 function loadDefaultTemplate(editor) {
     editor.setComponents('');
