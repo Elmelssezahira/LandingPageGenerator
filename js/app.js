@@ -152,12 +152,30 @@ function loadDefaultTemplate(editor) {
 }
 
 function initUI(editor) {
+    const welcomeOverlay = document.getElementById('welcome-overlay');
+    const welcomeStartButton = document.getElementById('welcome-start');
+    const welcomeDismissToggle = document.getElementById('welcome-dismiss-toggle');
     const modal = document.getElementById('modal-container');
     const modalBody = document.getElementById('modal-body');
     const modalTitle = document.getElementById('modal-title');
     const modalFooter = modal.querySelector('.modal-footer');
     const modalCloseButton = modal.querySelector('.modal-header .close-modal');
     const btnCreateBlock = document.getElementById('btn-create-block');
+    const welcomeStorageKey = 'efap-brassart-builder__hideWelcome';
+
+    function closeWelcome() {
+        if (welcomeDismissToggle.checked) {
+            localStorage.setItem(welcomeStorageKey, 'true');
+        }
+
+        welcomeOverlay.classList.add('hidden');
+    }
+
+    if (localStorage.getItem(welcomeStorageKey) !== 'true') {
+        welcomeOverlay.classList.remove('hidden');
+    }
+
+    welcomeStartButton.onclick = closeWelcome;
 
     function closeModal() {
         modal.classList.add('hidden');
