@@ -13,6 +13,17 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
     process.exit(1);
 }
 
+// ── Load schools config ─────────────────────────────────────────────
+const schoolsPath = path.join(__dirname, 'schools.json');
+let SCHOOLS = [];
+try {
+    SCHOOLS = JSON.parse(fs.readFileSync(schoolsPath, 'utf-8'));
+    console.log(`📚 ${SCHOOLS.length} écoles chargées depuis schools.json`);
+} catch (e) {
+    console.error('❌ Impossible de lire schools.json:', e.message);
+    process.exit(1);
+}
+
 const mimeTypes = {
     '.html': 'text/html',
     '.js': 'text/javascript',
@@ -53,6 +64,15 @@ async function supabaseRequest(method, endpoint, body = null) {
     return result;
 }
 
+// ── Parse URL helper ─────────────────────────────────────────────────
+function parseUrl(reqUrl) {
+    const qIdx = reqUrl.indexOf('?');
+    const pathname = qIdx >= 0 ? reqUrl.substring(0, qIdx) : reqUrl;
+    const search = qIdx >= 0 ? reqUrl.substring(qIdx) : '';
+    const params = new URLSearchParams(search);
+    return { pathname, params };
+}
+
 http.createServer(async (req, res) => {
 
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -64,8 +84,28 @@ http.createServer(async (req, res) => {
         return res.end();
     }
 
-    // Sauvegarder un projet
-    if (req.method === 'POST' && req.url === '/api/save') {
+    const { pathname, params } = parseUrl(req.url);
+
+    // ── API: List schools ────────────────────────────────────────────
+    if (req.method === 'GET' && pathname === '/api/schools') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(SCHOOLS));
+    }
+
+    // ── API: Get a single school config ──────────────────────────────
+    if (req.method === 'GET' && pathname.startsWith('/api/school/')) {
+        const schoolId = decodeURIComponent(pathname.replace('/api/school/', ''));
+        const school = SCHOOLS.find(s => s.id === schoolId);
+        if (!school) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ error: 'School not found' }));
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(school));
+    }
+
+    // ── API: Save project ────────────────────────────────────────────
+    if (req.method === 'POST' && pathname === '/api/save') {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', async () => {
@@ -119,8 +159,8 @@ http.createServer(async (req, res) => {
         return;
     }
 
-    // Récupérer tous les projets
-    if (req.method === 'GET' && req.url === '/api/projects') {
+    // ── API: List all projects ───────────────────────────────────────
+    if (req.method === 'GET' && pathname === '/api/projects') {
         try {
             console.log(`\n📋 Récupération de tous les projets`);
             const result = await supabaseRequest('GET', '/Projects?select=project_name,created_at');
@@ -135,10 +175,10 @@ http.createServer(async (req, res) => {
         return;
     }
 
-    // Récupérer un projet par nom
-    if (req.method === 'GET' && req.url.startsWith('/api/project/')) {
+    // ── API: Get project by name ─────────────────────────────────────
+    if (req.method === 'GET' && pathname.startsWith('/api/project/')) {
         try {
-            const projectName = decodeURIComponent(req.url.replace('/api/project/', ''));
+            const projectName = decodeURIComponent(pathname.replace('/api/project/', ''));
             console.log(`\n🔍 Récupération projet: "${projectName}"`);
             const result = await supabaseRequest('GET', `/Projects?project_name=eq.${encodeURIComponent(projectName)}&limit=1`);
             if (!result || result.length === 0) {
@@ -157,9 +197,34 @@ http.createServer(async (req, res) => {
         return;
     }
 
-    // Fichiers statiques
-    let filePath = '.' + req.url;
-    if (filePath === './') filePath = './index.html';
+    // ── Routing: root → school selector, /?school=xxx → builder ──────
+    if (req.method === 'GET' && pathname === '/') {
+        const schoolParam = params.get('school');
+        let filePath;
+
+        if (schoolParam) {
+            // If ?school=xxx → serve the builder (index.html)
+            filePath = path.join(__dirname, 'index.html');
+        } else {
+            // No school param → serve the school selector
+            filePath = path.join(__dirname, 'school-selector.html');
+        }
+
+        fs.readFile(filePath, (error, content) => {
+            if (error) {
+                res.writeHead(500);
+                res.end('Server error');
+            } else {
+                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.end(content, 'utf-8');
+            }
+        });
+        return;
+    }
+
+    // ── Static files ─────────────────────────────────────────────────
+    let filePath = '.' + pathname;
+    if (filePath === './') filePath = './school-selector.html';
 
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = mimeTypes[extname] || 'application/octet-stream';
@@ -177,4 +242,6 @@ http.createServer(async (req, res) => {
 }).listen(port, () => {
     console.log(`✅ Serveur lancé sur http://localhost:${port}/`);
     console.log(`🔗 Supabase URL: ${SUPABASE_URL}`);
+    console.log(`📚 Dashboard: http://localhost:${port}/`);
+    console.log(`🔨 Builder direct: http://localhost:${port}/?school=efap`);
 });
