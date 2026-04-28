@@ -141,13 +141,16 @@ function initEditor(schoolId) {
 }
 
 function filterBlocksBySchool(editor, schoolId) {
-    if (!schoolId || schoolId === 'master') return; 
+    if (!schoolId || schoolId === 'master') return;
 
-    // We use a small timeout to ensure BlockManager has fully registered everything
+    // Preserve timeout because some blocks register slightly after editor load
     setTimeout(() => {
         const bm = editor.BlockManager;
-        const allBlocks = bm.getAll();
-        const targetSchoolName = schoolId.toUpperCase(); 
+
+        // Use models snapshot from main to avoid mutation issues during removal
+        const allBlocks = bm.getAll().models;
+
+        const targetSchoolName = schoolId.toUpperCase();
         const defaultBlocks = CURRENT_SCHOOL?.defaultBlocks || [];
 
         const blocksToRemove = [];
@@ -155,21 +158,32 @@ function filterBlocksBySchool(editor, schoolId) {
         allBlocks.forEach(block => {
             const id = block.get('id');
             const category = block.get('category');
-            const categoryLabel = (typeof category === 'object' ? category.get('id') : category) || '';
 
-            const isTargetSchool = categoryLabel.toUpperCase().includes(`${targetSchoolName} COMPONENTS`);
-            const isOtherSchool = categoryLabel.includes(' Components') && !isTargetSchool;
-            const isRequiredByDefault = defaultBlocks.includes(id);
+            const categoryLabel =
+                (typeof category === 'object'
+                    ? category.get('id')
+                    : category) || '';
+
+            const isTargetSchool =
+                categoryLabel === `${targetSchoolName} Components`;
+
+            const isOtherSchool =
+                categoryLabel.includes(' Components') && !isTargetSchool;
+
+            const isRequiredByDefault =
+                defaultBlocks.includes(id);
 
             if (isOtherSchool && !isRequiredByDefault) {
                 blocksToRemove.push(id);
             }
         });
 
-        console.log(`🧹 Removing ${blocksToRemove.length} blocks from other schools for ${schoolId}`);
+        console.log(
+            `🧹 Removing ${blocksToRemove.length} blocks from other schools for ${schoolId}`
+        );
+
         blocksToRemove.forEach(id => bm.remove(id));
-        
-        // Final UI cleanup
+
         bm.render();
     }, 50);
 }
