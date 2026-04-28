@@ -36,7 +36,8 @@ export function registerBlocks(editor) {
         headerEfap, footerEfap,
         headerBrassart, footerBrassart,
         hero, twoColumn, richText, ctaButton, imageCaption, spacer,
-        horizontalMenu, programmeList, troisRaisons, formSfmc, chiffresCles,
+        horizontalMenu, bandeRose, programmeList, programmeEditorial,
+        troisRaisons, formSfmc, chiffresCles,
         carousel, CarrouselTemoignages, CarrouselCampus
         
     ].forEach(blockInit => {
