@@ -416,90 +416,188 @@ function initUI(editor) {
         }
     };
 
-    // Save Project with folder architecture
+    const CURRENT_KEY = 'efap-brassart-builder__currentProject';
+
+    function buildPreviewHtml(name, html, css) {
+        const baseHref = `${location.origin}${location.pathname.replace(/[^/]*$/, '')}`;
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="${baseHref}">
+    <title>${escapeHtml(name)}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>${css}</style>
+</head>
+<body>${html}</body>
+</html>`;
+    }
+
+    // Save Project (Supabase via /api/save)
     document.getElementById('btn-save').onclick = async () => {
-        let projectName = localStorage.getItem('efap-brassart-builder__currentProject');
-        
-        const newName = await showPrompt({
-            title: 'Save Project',
-            message: 'Choose the folder name used to save this landing page.',
-            defaultValue: projectName || 'my-project',
-            placeholder: 'my-project',
-            confirmLabel: 'Save Project'
+        const current = localStorage.getItem(CURRENT_KEY);
+
+        const projectName = await showPrompt({
+            title: 'Enregistrer le projet',
+            message: 'Donnez un nom à cette landing page. Réutiliser un nom existant le mettra à jour.',
+            defaultValue: current || 'mon-projet',
+            placeholder: 'mon-projet',
+            confirmLabel: 'Enregistrer'
         });
 
-        if (!newName) return;
-        
-        projectName = newName;
-        localStorage.setItem('efap-brassart-builder__currentProject', projectName);
-
-        const projectData = {
-            projectName,
-            html: editor.getHtml(),
-            css: editor.getCss(),
-            projectData: editor.getProjectData()
-        };
+        if (!projectName) return;
 
         try {
             const response = await fetch('/api/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(projectData)
+                body: JSON.stringify({
+                    projectName,
+                    html: editor.getHtml(),
+                    css: editor.getCss(),
+                    projectData: editor.getProjectData()
+                })
             });
-            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(`status ${response.status}`);
+            }
+
+            localStorage.setItem(CURRENT_KEY, projectName);
             await showAlert({
-                title: 'Project Saved',
-                message: result.message
+                title: 'Projet enregistré',
+                message: `"${projectName}" a bien été sauvegardé.`
             });
         } catch (e) {
             console.error('Save failed', e);
             await showAlert({
-                title: 'Save Failed',
-                message: 'Error saving project'
+                title: 'Sauvegarde impossible',
+                message: 'Nous n\'avons pas pu enregistrer votre projet. Vérifiez votre connexion puis réessayez.'
             });
         }
     };
 
-    // Preview: Exit builder and show real page
-    document.getElementById('btn-preview').onclick = async () => {
-        let projectName = localStorage.getItem('efap-brassart-builder__currentProject');
-        if (!projectName) {
-            projectName = await showPrompt({
-                title: 'Preview Project',
-                message: 'Please name your project before previewing.',
-                defaultValue: 'preview-project',
-                placeholder: 'preview-project',
-                confirmLabel: 'Open Preview'
-            });
+    // Preview: open a Blob URL in a new tab (no server-side preview)
+    document.getElementById('btn-preview').onclick = () => {
+        const name = localStorage.getItem(CURRENT_KEY) || 'preview';
+        const fullHtml = buildPreviewHtml(name, editor.getHtml(), editor.getCss());
+        const blob = new Blob([fullHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    };
 
-            if (!projectName) return;
-            localStorage.setItem('efap-brassart-builder__currentProject', projectName);
-        }
-
-        // Save first to ensure preview is up to date
-        const projectData = {
-            projectName,
-            html: editor.getHtml(),
-            css: editor.getCss(),
-            projectData: editor.getProjectData()
-        };
-
+    // Open saved project (from Supabase)
+    document.getElementById('btn-open').onclick = async () => {
+        let projects;
         try {
-            await fetch('/api/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(projectData)
-            });
-            
-            // Open the real page in a new window
-            window.open(`/projects/${projectName}/index.html`, '_blank');
+            const response = await fetch('/api/projects');
+            if (!response.ok) throw new Error(`status ${response.status}`);
+            projects = await response.json();
         } catch (e) {
-            console.error('Preview failed', e);
+            console.error('Fetch projects failed', e);
             await showAlert({
-                title: 'Preview Failed',
-                message: 'Error preparing preview'
+                title: 'Liste indisponible',
+                message: 'Impossible de récupérer vos projets pour l\'instant. Vérifiez votre connexion puis réessayez.'
             });
+            return;
         }
+
+        if (!projects || projects.length === 0) {
+            await showAlert({
+                title: 'Aucun projet enregistré',
+                message: 'Vous n\'avez encore aucun projet sauvegardé. Cliquez sur "Save Project" pour en créer un.'
+            });
+            return;
+        }
+
+        projects.sort((a, b) =>
+            (b.created_at || '').localeCompare(a.created_at || '')
+        );
+
+        const list = projects.map(p => {
+            const created = p.created_at
+                ? new Date(p.created_at).toLocaleString()
+                : '';
+            return `
+                <li class="project-row">
+                    <div class="project-row__info">
+                        <strong>${escapeHtml(p.project_name)}</strong>
+                        <span class="project-row__date">${escapeHtml(created)}</span>
+                    </div>
+                    <div class="project-row__actions">
+                        <button type="button" class="btn-secondary" data-load="${escapeHtml(p.project_name)}">Ouvrir</button>
+                    </div>
+                </li>`;
+        }).join('');
+
+        openModal({
+            title: 'Ouvrir un projet',
+            body: `<ul class="project-list">${list}</ul>`,
+            actions: [
+                { label: 'Fermer', className: 'btn-secondary', onClick: closeModal }
+            ],
+            onOpen: () => {
+                modalBody.querySelectorAll('[data-load]').forEach(btn => {
+                    btn.onclick = async () => {
+                        const name = btn.dataset.load;
+                        try {
+                            const r = await fetch(`/api/project/${encodeURIComponent(name)}`);
+                            if (!r.ok) throw new Error(`status ${r.status}`);
+                            const project = await r.json();
+                            const projectData = typeof project.project_data === 'string'
+                                ? JSON.parse(project.project_data)
+                                : project.project_data;
+
+                            if (projectData) {
+                                editor.loadProjectData(projectData);
+                            } else {
+                                editor.setComponents(project.html || '');
+                                editor.setStyle(project.css || '');
+                            }
+                            localStorage.setItem(CURRENT_KEY, project.project_name);
+                            closeModal();
+                        } catch (err) {
+                            console.error('Load project failed', err);
+                            closeModal();
+                            await showAlert({
+                                title: 'Ouverture impossible',
+                                message: 'Le projet n\'a pas pu être chargé. Réessayez dans un instant.'
+                            });
+                        }
+                    };
+                });
+            }
+        });
+    };
+
+    // Import JSON: load a previously exported project.json (local backup)
+    document.getElementById('import-json').onclick = (e) => {
+        e.preventDefault();
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json,.json';
+        input.onchange = async () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+                editor.loadProjectData(data);
+                await showAlert({
+                    title: 'Projet importé',
+                    message: `"${file.name}" a bien été chargé. Cliquez sur "Save Project" pour le conserver.`
+                });
+            } catch (err) {
+                console.error('Import failed', err);
+                await showAlert({
+                    title: 'Import impossible',
+                    message: 'Ce fichier ne semble pas être un projet valide. Choisissez un fichier JSON exporté depuis ce builder.'
+                });
+            }
+        };
+        input.click();
     };
 
     // Custom Block Creator

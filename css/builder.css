@@ -163,9 +163,8 @@ body {
     z-index: 1000;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    top: calc(100% + 6px);
-    padding: 4px;
-    overflow: hidden;
+    top: 100%;
+    padding: 10px 4px 4px;
 }
 
 .dropdown-content a {
@@ -1226,4 +1225,50 @@ body {
 ::selection {
     background: rgba(201, 184, 122, 0.25);
     color: #0d2b2b;
+}
+
+/* ═══════════════════════════════════════
+   PROJECT LIST (Open modal)
+   ═══════════════════════════════════════ */
+.project-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.project-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    border: 1px solid rgba(13, 43, 43, 0.08);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: #fff;
+}
+
+.project-row__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.project-row__info strong {
+    font-size: 14px;
+    color: #0d2b2b;
+}
+
+.project-row__date {
+    font-size: 12px;
+    color: rgba(13, 43, 43, 0.6);
+}
+
+.project-row__actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
 }
