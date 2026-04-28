@@ -163,11 +163,10 @@ function filterBlocksBySchool(editor, schoolId) {
         if (isOtherSchool && !isRequiredByDefault) {
             blocksToRemove.push(id);
         }
-    });
+     });
 
     blocksToRemove.forEach(id => bm.remove(id));
 
-    // Refresh UI
     bm.render();
 }
 function updateSchoolUI(school) {
