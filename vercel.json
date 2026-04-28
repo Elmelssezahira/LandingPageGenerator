@@ -9,5 +9,19 @@
                 }
             ]
         }
+    ],
+    "rewrites": [
+        {
+            "source": "/preview/:name",
+            "destination": "/api/preview?name=:name"
+        },
+        {
+            "source": "/api/school/:id",
+            "destination": "/api/school?id=:id"
+        },
+        {
+            "source": "/api/project/:name",
+            "destination": "/api/project?name=:name"
+        }
     ]
 }

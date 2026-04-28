@@ -1,4 +1,4 @@
-const { readSchools } = require('../lib/schools');
+const { readSchools, findSchoolById } = require('../lib/schools');
 
 module.exports = async function handler(req, res) {
     if (req.method !== 'GET') {
@@ -7,6 +7,17 @@ module.exports = async function handler(req, res) {
     }
 
     try {
+        const { id } = req.query;
+        
+        if (id) {
+            const school = findSchoolById(id);
+            if (!school) {
+                return res.status(404).json({ error: `School with ID ${id} not found` });
+            }
+            return res.status(200).json(school);
+        }
+
+        // Fallback: return all schools if no ID provided
         return res.status(200).json(readSchools());
     } catch (e) {
         return res.status(500).json({
