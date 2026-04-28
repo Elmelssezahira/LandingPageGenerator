@@ -171,9 +171,6 @@ function filterBlocksBySchool(editor, schoolId) {
     bm.render();
 }
 
-    // Refresh UI
-    bm.render();
-}
 function updateSchoolUI(school) {
     const indicator = document.getElementById('school-indicator');
     const dot = document.getElementById('school-dot');
