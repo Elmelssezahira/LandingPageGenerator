@@ -41,147 +41,21 @@
     ]
   },
   {
-    "id": "isart",
-    "name": "ISART Digital",
-    "fullName": "Institut Supérieur des Arts et du Jeu Vidéo",
-    "description": "Jeu Vidéo, Cinéma d'Animation & Musique",
-    "color": "#7c3aed",
-    "secondaryColor": "#6d28d9",
-    "colorLight": "rgba(124,58,237,0.12)",
-    "emoji": "🎮",
-    "defaultBlocks": [
-      "header-efap",
-      "hero",
-      "programme-list",
-      "form-sfmc",
-      "cta-button",
-      "footer-efap"
-    ]
-  },
-  {
-    "id": "lisaa",
-    "name": "LISAA",
-    "fullName": "L'Institut Supérieur des Arts Appliqués",
-    "description": "Mode, Design Intérieur & Graphisme",
-    "color": "#0d9488",
-    "secondaryColor": "#0f766e",
-    "colorLight": "rgba(13,148,136,0.12)",
-    "emoji": "✂️",
-    "defaultBlocks": [
-      "header-efap",
-      "hero",
-      "programme-list",
-      "form-sfmc",
-      "cta-button",
-      "footer-efap"
-    ]
-  },
-  {
-    "id": "ecv",
-    "name": "ECV Digital",
-    "fullName": "École de Communication Visuelle",
-    "description": "Communication Visuelle, Motion & UX",
-    "color": "#ea580c",
-    "secondaryColor": "#c2410c",
-    "colorLight": "rgba(234,88,12,0.12)",
-    "emoji": "🖥️",
-    "defaultBlocks": [
-      "header-efap",
-      "hero",
-      "programme-list",
-      "chiffres-cles",
-      "form-sfmc",
-      "cta-button",
-      "footer-efap"
-    ]
-  },
-  {
-    "id": "esag",
-    "name": "ESAG Penninghen",
-    "fullName": "École Supérieure d'Arts Graphiques",
-    "description": "Arts Graphiques, Architecture Intérieure",
-    "color": "#15803d",
-    "secondaryColor": "#166534",
-    "colorLight": "rgba(21,128,61,0.12)",
-    "emoji": "🖌️",
-    "defaultBlocks": [
-      "header-efap",
-      "hero",
-      "programme-editorial",
-      "form-sfmc",
-      "cta-button",
-      "footer-efap"
-    ]
-  },
-  {
-    "id": "isd",
-    "name": "ISD",
-    "fullName": "Institut Supérieur du Design de Valenciennes",
-    "description": "Design Produit, Design Espace & Numérique",
-    "color": "#4338ca",
-    "secondaryColor": "#3730a3",
-    "colorLight": "rgba(67,56,202,0.12)",
-    "emoji": "📐",
-    "defaultBlocks": [
-      "header-efap",
-      "hero",
-      "programme-list",
-      "form-sfmc",
-      "cta-button",
-      "footer-efap"
-    ]
-  },
-  {
-    "id": "mjm",
-    "name": "MJM Graphic Design",
-    "fullName": "MJM Graphic Design",
-    "description": "Graphisme, Web Design & Motion Design",
-    "color": "#dc2626",
-    "secondaryColor": "#b91c1c",
-    "colorLight": "rgba(220,38,38,0.12)",
-    "emoji": "🖼️",
-    "defaultBlocks": [
-      "header-efap",
-      "hero",
-      "programme-list",
-      "form-sfmc",
-      "cta-button",
-      "footer-efap"
-    ]
-  },
-  {
-    "id": "supdepub",
-    "name": "SUP DE PUB",
-    "fullName": "SUP DE PUB — École de Publicité",
-    "description": "Publicité, Stratégie de Marque & Digital",
-    "color": "#d97706",
+    "id": "icart",
+    "name": "ICART",
+    "fullName": "L'école du management de la culture et du marché de l'art",
+    "description": "Management Culturel, Marché de l'Art & Médiation",
+    "color": "#f59e0b",
     "secondaryColor": "#b45309",
-    "colorLight": "rgba(217,119,6,0.12)",
-    "emoji": "📣",
+    "colorLight": "rgba(245,158,11,0.12)",
+    "emoji": "🎭",
     "defaultBlocks": [
       "header-efap",
       "hero",
+      "horizontal-menu",
       "programme-list",
       "form-sfmc",
-      "cta-button",
-      "footer-efap"
-    ]
-  },
-  {
-    "id": "esmod",
-    "name": "ESMOD",
-    "fullName": "ESMOD — École Supérieure des Arts et Techniques de la Mode",
-    "description": "Mode, Stylisme & Management du Luxe",
-    "color": "#be185d",
-    "secondaryColor": "#9d174d",
-    "colorLight": "rgba(190,24,93,0.12)",
-    "emoji": "👗",
-    "defaultBlocks": [
-      "header-efap",
-      "hero",
-      "programme-editorial",
-      "programme-list",
-      "form-sfmc",
+      "chiffres-cles",
       "cta-button",
       "footer-efap"
     ]

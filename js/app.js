@@ -37,10 +37,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const response = await fetch(`/api/school/${schoolId}?v=${Date.now()}`);
         if (response.ok) {
             CURRENT_SCHOOL = await response.json();
+            
+            // Security overrides for main schools
             if (CURRENT_SCHOOL.id === 'efap') {
                 CURRENT_SCHOOL.secondaryColor = '#1a1a1a';
                 if (!CURRENT_SCHOOL.color) CURRENT_SCHOOL.color = '#d9d0c1';
+            } else if (CURRENT_SCHOOL.id === 'brassart') {
+                if (!CURRENT_SCHOOL.secondaryColor) CURRENT_SCHOOL.secondaryColor = '#e91e63';
             }
+
             updateSchoolUI(CURRENT_SCHOOL);
             injectBrandVariables(null, CURRENT_SCHOOL, true);
         } else if (schoolId === 'master') {
@@ -48,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateSchoolUI(CURRENT_SCHOOL);
             injectBrandVariables(null, CURRENT_SCHOOL, true);
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('Failed to load school config', e); }
 
     initEditor(schoolId);
 });
@@ -87,10 +92,14 @@ function initEditor(schoolId) {
     editor.on('load', () => {
         filterBlocksBySchool(editor, schoolId);
         injectBrandVariables(editor, CURRENT_SCHOOL);
+        
         const wrapper = editor.getWrapper();
-        if (!wrapper || wrapper.components().length === 0) loadDefaultTemplate(editor);
+        if (!wrapper || wrapper.components().length === 0) {
+            loadDefaultTemplate(editor);
+        }
     });
 
+    if (schoolId === 'icart') initIcartSpecifics(editor);
     window.editor = editor;
 }
 
@@ -103,14 +112,23 @@ function injectBrandVariables(editor, school, intoMainDoc = false) {
     
     if (intoMainDoc) {
         let style = document.getElementById('brand-variables-main');
-        if (!style) { style = document.createElement('style'); style.id = 'brand-variables-main'; document.head.appendChild(style); }
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'brand-variables-main';
+            document.head.appendChild(style);
+        }
         style.innerHTML = css;
     }
+
     if (editor) {
         const doc = editor.Canvas.getDocument();
         if (doc) {
             let style = doc.getElementById('brand-variables');
-            if (!style) { style = doc.createElement('style'); style.id = 'brand-variables'; doc.head.appendChild(style); }
+            if (!style) {
+                style = doc.createElement('style');
+                style.id = 'brand-variables';
+                doc.head.appendChild(style);
+            }
             style.innerHTML = css;
         }
     }
@@ -127,6 +145,7 @@ function filterBlocksBySchool(editor, schoolId) {
     const allBlocks = bm.getAll().models; 
     const targetSchoolName = schoolId.toUpperCase(); 
     const blocksToRemove = [];
+
     allBlocks.forEach(block => {
         const id = block.get('id');
         const category = block.get('category');
@@ -134,8 +153,12 @@ function filterBlocksBySchool(editor, schoolId) {
         const isTargetSchool = categoryLabel === `${targetSchoolName} Components`;
         const isOtherSchool = categoryLabel.includes(' Components') && !isTargetSchool;
         const isRequiredByDefault = (CURRENT_SCHOOL?.defaultBlocks || []).includes(id);
-        if (isOtherSchool && !isRequiredByDefault) blocksToRemove.push(id);
+
+        if (isOtherSchool && !isRequiredByDefault) {
+            blocksToRemove.push(id);
+        }
     });
+
     blocksToRemove.forEach(id => bm.remove(id));
     bm.render();
 }
@@ -144,7 +167,11 @@ function updateSchoolUI(school) {
     const indicator = document.getElementById('school-indicator');
     const dot = document.getElementById('school-dot');
     const label = document.getElementById('school-label');
-    if (indicator && school) { indicator.style.display = 'flex'; dot.style.backgroundColor = school.color; label.textContent = school.name; }
+    if (indicator && school) {
+        indicator.style.display = 'flex';
+        dot.style.backgroundColor = school.color;
+        label.textContent = school.name;
+    }
 }
 
 function initBlockThumbnailMedia(editor) {
@@ -301,6 +328,16 @@ function initUI(editor) {
             closeModal();
         } catch (e) { console.error(e); }
     };
+}
+
+function initIcartSpecifics(editor) {
+    editor.on('load', () => {
+        setTimeout(() => {
+            const bm = editor.BlockManager;
+            const icartCat = bm.getCategories().find(c => (c.get('id') || '').includes('ICART'));
+            if (icartCat) icartCat.set('open', true);
+        }, 200);
+    });
 }
 
 function escapeHtml(value) {
