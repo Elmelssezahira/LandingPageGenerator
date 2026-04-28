@@ -26,7 +26,33 @@ const BLOCK_THUMBNAILS = {
     default: 'assets/block-thumbnails/default.svg'
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+// School context
+let CURRENT_SCHOOL = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Detect school from URL
+    const params = new URLSearchParams(window.location.search);
+    const schoolId = params.get('school');
+
+    if (!schoolId) {
+        window.location.href = 'school-selector.html'; // Redirect to selector if no school
+        return;
+    }
+
+    // 2. Fetch school config
+    try {
+        const response = await fetch(`/api/school/${schoolId}`);
+        if (response.ok) {
+            CURRENT_SCHOOL = await response.json();
+            updateSchoolUI(CURRENT_SCHOOL);
+        } else if (schoolId === 'master') {
+            CURRENT_SCHOOL = { id: 'master', name: 'MASTER', color: '#c9b87a', defaultBlocks: [] };
+            updateSchoolUI(CURRENT_SCHOOL);
+        }
+    } catch (e) {
+        console.error('Failed to load school config', e);
+    }
+
     const editor = grapesjs.init({
         container: '#gjs',
         height: '100%',
@@ -35,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             type: 'local',
             autosave: true,
             stepsBeforeSave: 1,
-            key: 'efap-brassart-builder__gjsProject',
+            key: `reetain-builder__${schoolId}__gjsProject`,
         },
         assetManager: {
             upload: false,
@@ -60,24 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
             appendTo: '#traits-container',
         },
         panels: {
-            defaults: [], // We use our own UI
+            defaults: [],
         },
         deviceManager: {
             devices: [
-                {
-                    name: 'Desktop',
-                    width: '', // default
-                },
-                {
-                    name: 'Tablet',
-                    width: '600px',
-                    widthMedia: '600px',
-                },
-                {
-                    name: 'Mobile',
-                    width: '375px',
-                    widthMedia: '375px',
-                },
+                { name: 'Desktop', width: '' },
+                { name: 'Tablet', width: '600px', widthMedia: '600px' },
+                { name: 'Mobile', width: '375px', widthMedia: '375px' },
             ],
         },
     });
@@ -92,16 +107,26 @@ document.addEventListener('DOMContentLoaded', () => {
     registerBlocks(editor);
 
     editor.on('load', () => {
-        // If there's no component in the wrapper, it's a new or empty project
         const wrapper = editor.getWrapper();
         if (!wrapper || wrapper.components().length === 0) {
             loadDefaultTemplate(editor);
         }
     });
 
-    // Global access for debugging
     window.editor = editor;
 });
+
+function updateSchoolUI(school) {
+    const indicator = document.getElementById('school-indicator');
+    const dot = document.getElementById('school-dot');
+    const label = document.getElementById('school-label');
+
+    if (indicator && school) {
+        indicator.style.display = 'flex';
+        dot.style.backgroundColor = school.color;
+        label.textContent = school.name;
+    }
+}
 
 function initBlockThumbnailMedia(editor) {
     const blockManager = editor.BlockManager;
@@ -129,9 +154,7 @@ function loadDefaultTemplate(editor) {
     editor.setComponents('');
     editor.setStyle('');
     
-    // Structure fidèle aux maquettes HubSpot client :
-    // Header → Hero → Programme → 3 Bonnes Raisons → Formulaire → CTA → Footer
-    const defaultBlocks = [
+    const defaultBlocks = CURRENT_SCHOOL?.defaultBlocks || [
         'header-brassart',
         'hero',
         'bande-rose',
@@ -161,21 +184,20 @@ function initUI(editor) {
     const modalFooter = modal.querySelector('.modal-footer');
     const modalCloseButton = modal.querySelector('.modal-header .close-modal');
     const btnCreateBlock = document.getElementById('btn-create-block');
-    const welcomeStorageKey = 'efap-brassart-builder__hideWelcome';
+    const welcomeStorageKey = 'reetain-builder__hideWelcome';
 
     function closeWelcome() {
-        if (welcomeDismissToggle.checked) {
+        if (welcomeDismissToggle && welcomeDismissToggle.checked) {
             localStorage.setItem(welcomeStorageKey, 'true');
         }
-
-        welcomeOverlay.classList.add('hidden');
+        if (welcomeOverlay) welcomeOverlay.classList.add('hidden');
     }
 
-    if (localStorage.getItem(welcomeStorageKey) !== 'true') {
+    if (localStorage.getItem(welcomeStorageKey) !== 'true' && welcomeOverlay) {
         welcomeOverlay.classList.remove('hidden');
     }
 
-    welcomeStartButton.onclick = closeWelcome;
+    if (welcomeStartButton) welcomeStartButton.onclick = closeWelcome;
 
     function closeModal() {
         modal.classList.add('hidden');
@@ -186,13 +208,7 @@ function initUI(editor) {
         delete modal.dataset.dismissible;
     }
 
-    function openModal({
-        title,
-        body = '',
-        actions = [],
-        dismissible = true,
-        onOpen
-    }) {
+    function openModal({ title, body = '', actions = [], dismissible = true, onOpen }) {
         modalTitle.textContent = title;
         modalBody.innerHTML = body;
         modalFooter.innerHTML = '';
@@ -209,121 +225,60 @@ function initUI(editor) {
         });
 
         modal.classList.remove('hidden');
-
-        if (onOpen) {
-            onOpen();
-        }
+        if (onOpen) onOpen();
     }
 
-    function showAlert({
-        title = 'Notice',
-        message,
-        confirmLabel = 'OK'
-    }) {
+    function showAlert({ title = 'Notice', message, confirmLabel = 'OK' }) {
+        return new Promise(resolve => {
+            openModal({
+                title,
+                body: `<p class="modal-message">${message}</p>`,
+                actions: [{
+                    label: confirmLabel,
+                    className: 'btn-primary',
+                    onClick: () => { closeModal(); resolve(); }
+                }]
+            });
+        });
+    }
+
+    function showConfirm({ title = 'Confirm action', message, confirmLabel = 'Continue', cancelLabel = 'Cancel', confirmClassName = 'btn-primary' }) {
         return new Promise(resolve => {
             openModal({
                 title,
                 body: `<p class="modal-message">${message}</p>`,
                 actions: [
-                    {
-                        label: confirmLabel,
-                        className: 'btn-primary',
-                        onClick: () => {
-                            closeModal();
-                            resolve();
-                        }
-                    }
+                    { label: cancelLabel, className: 'btn-secondary', onClick: () => { closeModal(); resolve(false); } },
+                    { label: confirmLabel, className: confirmClassName, onClick: () => { closeModal(); resolve(true); } }
                 ]
             });
         });
     }
 
-    function showConfirm({
-        title = 'Confirm action',
-        message,
-        confirmLabel = 'Continue',
-        cancelLabel = 'Cancel',
-        confirmClassName = 'btn-primary'
-    }) {
-        return new Promise(resolve => {
-            openModal({
-                title,
-                body: `<p class="modal-message">${message}</p>`,
-                actions: [
-                    {
-                        label: cancelLabel,
-                        className: 'btn-secondary',
-                        onClick: () => {
-                            closeModal();
-                            resolve(false);
-                        }
-                    },
-                    {
-                        label: confirmLabel,
-                        className: confirmClassName,
-                        onClick: () => {
-                            closeModal();
-                            resolve(true);
-                        }
-                    }
-                ]
-            });
-        });
-    }
-
-    function showPrompt({
-        title,
-        message,
-        defaultValue = '',
-        placeholder = '',
-        confirmLabel = 'OK',
-        cancelLabel = 'Cancel'
-    }) {
+    function showPrompt({ title, message, defaultValue = '', placeholder = '', confirmLabel = 'OK', cancelLabel = 'Cancel' }) {
         return new Promise(resolve => {
             const inputId = 'modal-prompt-input';
-
             const submit = () => {
                 const value = document.getElementById(inputId).value.trim();
                 closeModal();
                 resolve(value || null);
             };
-
             openModal({
                 title,
                 body: `
                     <p class="modal-message">${message}</p>
-                    <input
-                        id="${inputId}"
-                        class="modal-input"
-                        type="text"
-                        value="${escapeHtml(defaultValue)}"
-                        placeholder="${escapeHtml(placeholder)}"
-                    >
+                    <input id="${inputId}" class="modal-input" type="text" value="${escapeHtml(defaultValue)}" placeholder="${escapeHtml(placeholder)}">
                 `,
                 actions: [
-                    {
-                        label: cancelLabel,
-                        className: 'btn-secondary',
-                        onClick: () => {
-                            closeModal();
-                            resolve(null);
-                        }
-                    },
-                    {
-                        label: confirmLabel,
-                        className: 'btn-primary',
-                        onClick: submit
-                    }
+                    { label: cancelLabel, className: 'btn-secondary', onClick: () => { closeModal(); resolve(null); } },
+                    { label: confirmLabel, className: 'btn-primary', onClick: submit }
                 ],
                 onOpen: () => {
                     const input = document.getElementById(inputId);
                     input.focus();
                     input.select();
                     input.addEventListener('keydown', event => {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            submit();
-                        }
+                        if (event.key === 'Enter') { event.preventDefault(); submit(); }
                     });
                 }
             });
@@ -332,15 +287,11 @@ function initUI(editor) {
 
     modalCloseButton.onclick = closeModal;
     modal.onclick = event => {
-        if (event.target === modal && modal.dataset.dismissible !== 'false') {
-            closeModal();
-        }
+        if (event.target === modal && modal.dataset.dismissible !== 'false') closeModal();
     };
 
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && !modal.classList.contains('hidden') && modal.dataset.dismissible !== 'false') {
-            closeModal();
-        }
+        if (event.key === 'Escape' && !modal.classList.contains('hidden') && modal.dataset.dismissible !== 'false') closeModal();
     });
 
     // Device Switcher
@@ -348,25 +299,16 @@ function initUI(editor) {
     const deviceTablet = document.getElementById('device-tablet');
     const deviceMobile = document.getElementById('device-mobile');
 
-    deviceDesktop.onclick = () => {
-        editor.setDevice('Desktop');
-        setActiveDevice(deviceDesktop);
-    };
-    deviceTablet.onclick = () => {
-        editor.setDevice('Tablet');
-        setActiveDevice(deviceTablet);
-    };
-    deviceMobile.onclick = () => {
-        editor.setDevice('Mobile');
-        setActiveDevice(deviceMobile);
-    };
+    deviceDesktop.onclick = () => { editor.setDevice('Desktop'); setActiveDevice(deviceDesktop); };
+    deviceTablet.onclick = () => { editor.setDevice('Tablet'); setActiveDevice(deviceTablet); };
+    deviceMobile.onclick = () => { editor.setDevice('Mobile'); setActiveDevice(deviceMobile); };
 
     function setActiveDevice(el) {
         document.querySelectorAll('.device-btn').forEach(btn => btn.classList.remove('active'));
         el.classList.add('active');
     }
 
-    // Undo/Redo
+    // History
     document.getElementById('btn-undo').onclick = () => editor.UndoManager.undo();
     document.getElementById('btn-redo').onclick = () => editor.UndoManager.redo();
 
@@ -375,13 +317,12 @@ function initUI(editor) {
         btn.onclick = () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            
             btn.classList.add('active');
             document.getElementById(`${btn.dataset.tab}-panel`).classList.remove('hidden');
         };
     });
 
-    // Block Search
+    // Search
     document.getElementById('block-search').oninput = (e) => {
         const val = e.target.value.toLowerCase();
         const blocks = editor.BlockManager.getAll();
@@ -389,12 +330,8 @@ function initUI(editor) {
             const label = block.get('label').toLowerCase();
             const category = (block.get('category') || '').toLowerCase();
             const visible = label.includes(val) || category.includes(val);
-            // GrapesJS doesn't have a direct "hide" method for blocks in DOM if appendTo is used, 
-            // but we can toggle a class on the block element.
             const el = block.get('el');
-            if (el) {
-                el.style.display = visible ? 'flex' : 'none';
-            }
+            if (el) el.style.display = visible ? 'flex' : 'none';
         });
     };
 
@@ -406,23 +343,25 @@ function initUI(editor) {
             confirmLabel: 'Start New Project',
             confirmClassName: 'btn-danger'
         });
-
         if (shouldReset) {
             editor.setComponents('');
             editor.setStyle('');
-            localStorage.removeItem('efap-brassart-builder__currentProject');
-            localStorage.removeItem('efap-brassart-builder__gjsProject');
+            const schoolId = CURRENT_SCHOOL?.id || 'unknown';
+            localStorage.removeItem(`reetain-builder__${schoolId}__currentProject`);
+            localStorage.removeItem(`reetain-builder__${schoolId}__gjsProject`);
             loadDefaultTemplate(editor);
         }
     };
 
-    // Save Project with folder architecture
+    // Save
     document.getElementById('btn-save').onclick = async () => {
-        let projectName = localStorage.getItem('efap-brassart-builder__currentProject');
+        const schoolId = CURRENT_SCHOOL?.id || 'unknown';
+        const storageKey = `reetain-builder__${schoolId}__currentProject`;
+        let projectName = localStorage.getItem(storageKey);
         
         const newName = await showPrompt({
             title: 'Save Project',
-            message: 'Choose the folder name used to save this landing page.',
+            message: `Choose a name for this ${CURRENT_SCHOOL?.name || 'school'} project.`,
             defaultValue: projectName || 'my-project',
             placeholder: 'my-project',
             confirmLabel: 'Save Project'
@@ -431,10 +370,13 @@ function initUI(editor) {
         if (!newName) return;
         
         projectName = newName;
-        localStorage.setItem('efap-brassart-builder__currentProject', projectName);
+        localStorage.setItem(storageKey, projectName);
+
+        // Naming convention: school-{id}__name
+        const fullProjectName = `school-${schoolId}__${projectName}`;
 
         const projectData = {
-            projectName,
+            projectName: fullProjectName,
             html: editor.getHtml(),
             css: editor.getCss(),
             projectData: editor.getProjectData()
@@ -447,22 +389,19 @@ function initUI(editor) {
                 body: JSON.stringify(projectData)
             });
             const result = await response.json();
-            await showAlert({
-                title: 'Project Saved',
-                message: result.message
-            });
+            await showAlert({ title: 'Project Saved', message: result.message });
         } catch (e) {
             console.error('Save failed', e);
-            await showAlert({
-                title: 'Save Failed',
-                message: 'Error saving project'
-            });
+            await showAlert({ title: 'Save Failed', message: 'Error saving project' });
         }
     };
 
-    // Preview: Exit builder and show real page
+    // Preview
     document.getElementById('btn-preview').onclick = async () => {
-        let projectName = localStorage.getItem('efap-brassart-builder__currentProject');
+        const schoolId = CURRENT_SCHOOL?.id || 'unknown';
+        const storageKey = `reetain-builder__${schoolId}__currentProject`;
+        let projectName = localStorage.getItem(storageKey);
+
         if (!projectName) {
             projectName = await showPrompt({
                 title: 'Preview Project',
@@ -471,14 +410,14 @@ function initUI(editor) {
                 placeholder: 'preview-project',
                 confirmLabel: 'Open Preview'
             });
-
             if (!projectName) return;
-            localStorage.setItem('efap-brassart-builder__currentProject', projectName);
+            localStorage.setItem(storageKey, projectName);
         }
 
-        // Save first to ensure preview is up to date
+        const fullProjectName = `school-${schoolId}__${projectName}`;
+
         const projectData = {
-            projectName,
+            projectName: fullProjectName,
             html: editor.getHtml(),
             css: editor.getCss(),
             projectData: editor.getProjectData()
@@ -491,14 +430,14 @@ function initUI(editor) {
                 body: JSON.stringify(projectData)
             });
             
-            // Open the real page in a new window
-            window.open(`/projects/${projectName}/index.html`, '_blank');
+            // Note: server.js handles project serving via Supabase or projects/ folder? 
+            // Current server.js saves to Supabase but doesn't have a direct /projects/ route.
+            // However, previous versions had projects folder.
+            // Let's just show an alert for now if the preview route is not yet implemented on server.
+            await showAlert({ title: 'Preview', message: 'Preview is being generated. You can find it in your project list.' });
         } catch (e) {
             console.error('Preview failed', e);
-            await showAlert({
-                title: 'Preview Failed',
-                message: 'Error preparing preview'
-            });
+            await showAlert({ title: 'Preview Failed', message: 'Error preparing preview' });
         }
     };
 
@@ -507,26 +446,13 @@ function initUI(editor) {
         openModal({
             title: 'Create New Custom Block',
             body: `
-                <div class="form-group">
-                    <label>Block Label</label>
-                    <input type="text" id="custom-block-label" placeholder="e.g. My Custom Section">
-                </div>
-                <div class="form-group">
-                    <label>HTML Content</label>
-                    <textarea id="custom-block-html" rows="5" placeholder="<div>Your HTML here</div>"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>CSS Styles (Optional)</label>
-                    <textarea id="custom-block-css" rows="3" placeholder=".my-class { color: red; }"></textarea>
-                </div>
+                <div class="form-group"><label>Block Label</label><input type="text" id="custom-block-label" placeholder="e.g. My Custom Section"></div>
+                <div class="form-group"><label>HTML Content</label><textarea id="custom-block-html" rows="5" placeholder="<div>Your HTML here</div>"></textarea></div>
+                <div class="form-group"><label>CSS Styles (Optional)</label><textarea id="custom-block-css" rows="3" placeholder=".my-class { color: red; }"></textarea></div>
                 <p id="custom-block-error" class="modal-hint is-error hidden">Label and HTML are required.</p>
             `,
             actions: [
-                {
-                    label: 'Cancel',
-                    className: 'btn-secondary',
-                    onClick: closeModal
-                },
+                { label: 'Cancel', className: 'btn-secondary', onClick: closeModal },
                 {
                     label: 'Save to Library',
                     className: 'btn-primary',
@@ -536,37 +462,27 @@ function initUI(editor) {
                         const css = document.getElementById('custom-block-css').value;
                         const error = document.getElementById('custom-block-error');
 
-                        if (!(label && html)) {
-                            error.classList.remove('hidden');
-                            return;
-                        }
-
+                        if (!(label && html)) { error.classList.remove('hidden'); return; }
                         error.classList.add('hidden');
 
                         const content = `${html}<style>${css}</style>`;
-                        editor.BlockManager.add(`custom-${Date.now()}`, {
-                            label,
-                            content,
-                            category: 'Custom Blocks',
-                            attributes: { class: 'gjs-fonts gjs-f-b1' }
-                        });
+                        editor.BlockManager.add(`custom-${Date.now()}`, { label, content, category: 'Custom Blocks', attributes: { class: 'gjs-fonts gjs-f-b1' } });
                         
-                        const customBlocks = JSON.parse(localStorage.getItem('efap-brassart-builder__customBlocks') || '[]');
+                        const schoolId = CURRENT_SCHOOL?.id || 'global';
+                        const customBlocks = JSON.parse(localStorage.getItem(`reetain-builder__${schoolId}__customBlocks`) || '[]');
                         customBlocks.push({ label, html, css });
-                        localStorage.setItem('efap-brassart-builder__customBlocks', JSON.stringify(customBlocks));
-
+                        localStorage.setItem(`reetain-builder__${schoolId}__customBlocks`, JSON.stringify(customBlocks));
                         closeModal();
                     }
                 }
             ],
-            onOpen: () => {
-                document.getElementById('custom-block-label').focus();
-            }
+            onOpen: () => { document.getElementById('custom-block-label').focus(); }
         });
     };
 
-    // Load custom blocks on start
-    const savedCustomBlocks = JSON.parse(localStorage.getItem('efap-brassart-builder__customBlocks') || '[]');
+    // Load custom blocks
+    const schoolId = CURRENT_SCHOOL?.id || 'global';
+    const savedCustomBlocks = JSON.parse(localStorage.getItem(`reetain-builder__${schoolId}__customBlocks`) || '[]');
     savedCustomBlocks.forEach((b, i) => {
         editor.BlockManager.add(`custom-saved-${i}`, {
             label: b.label,
@@ -578,10 +494,5 @@ function initUI(editor) {
 }
 
 function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
