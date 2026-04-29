@@ -50,14 +50,12 @@
     "colorLight": "rgba(245,158,11,0.12)",
     "emoji": "🎭",
     "defaultBlocks": [
-      "header-efap",
       "hero",
       "horizontal-menu",
       "programme-list",
       "form-sfmc",
       "chiffres-cles",
-      "cta-button",
-      "footer-efap"
+      "cta-button"
     ]
   }
 ]

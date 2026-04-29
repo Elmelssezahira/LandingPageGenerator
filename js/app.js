@@ -313,7 +313,7 @@ function initUI(editor) {
     // Open Project
     document.getElementById('btn-open').onclick = async () => {
         try {
-            const response = await fetch('/api/list');
+            const response = await fetch('/api/projects');
             const projects = await response.json();
             const schoolId = CURRENT_SCHOOL?.id || 'unknown';
             const filtered = projects.filter(p => p.project_name.startsWith(`school-${schoolId}__`));

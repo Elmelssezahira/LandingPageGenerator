@@ -3,6 +3,7 @@ require('dotenv').config();
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const { syncProjectToSfmc, isSfmcConfigured } = require('./lib/sfmc');
 
 const port = process.env.PORT || 8000;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -146,8 +147,34 @@ http.createServer(async (req, res) => {
                 }
 
                 console.log(`✅ Projet "${projectName}" sauvegardé avec succès!`);
+
+                // Save project into SFMC Content
+                let sfmcResult = { skipped: true, action: 'skipped' };
+                if (isSfmcConfigured()) {
+                    try {
+                        sfmcResult = await syncProjectToSfmc({ projectName, fullHtml });
+                        console.log(
+                            `☁️  SFMC sync: ${sfmcResult.action}` +
+                            (sfmcResult.name ? ` → "${sfmcResult.name}"` : '') +
+                            (sfmcResult.id ? ` (id=${sfmcResult.id})` : '')
+                        );
+                    } catch (sfmcErr) {
+                        console.error('⚠️  SFMC sync failed:', sfmcErr.code || '', sfmcErr.message, sfmcErr.payload || '');
+                        sfmcResult = {
+                            skipped: false,
+                            action: 'failed',
+                            error: sfmcErr.message,
+                            code: sfmcErr.code,
+                            status: sfmcErr.status,
+                            details: sfmcErr.payload
+                        };
+                    }
+                } else {
+                    console.log('⏭️  SFMC sync skipped (env vars not configured).');
+                }
+
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ message: 'Project saved!', projectName }));
+                res.end(JSON.stringify({ message: 'Project saved!', projectName, sfmc: sfmcResult }));
 
             } catch (e) {
                 console.log(`❌ Erreur catch:`, e.message);

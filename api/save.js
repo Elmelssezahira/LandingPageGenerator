@@ -1,4 +1,5 @@
 const { supabaseRequest } = require('../lib/supabase');
+const { syncProjectToSfmc, isSfmcConfigured } = require('../lib/sfmc');
 
 module.exports = async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -34,7 +35,25 @@ module.exports = async function handler(req, res) {
             project_data: JSON.stringify(projectData)
         });
 
-        return res.status(200).json({ message: 'Project saved!', projectName });
+        // Save project into SFMC Content Builder.
+        let sfmcResult = { skipped: true, action: 'skipped' };
+        if (isSfmcConfigured()) {
+            try {
+                sfmcResult = await syncProjectToSfmc({ projectName, fullHtml });
+            } catch (sfmcErr) {
+                console.error('⚠️  SFMC sync failed:', sfmcErr.code || '', sfmcErr.message, sfmcErr.payload || '');
+                sfmcResult = {
+                    skipped: false,
+                    action: 'failed',
+                    error: sfmcErr.message,
+                    code: sfmcErr.code,
+                    status: sfmcErr.status,
+                    details: sfmcErr.payload
+                };
+            }
+        }
+
+        return res.status(200).json({ message: 'Project saved!', projectName, sfmc: sfmcResult });
     } catch (e) {
         if (e.code === 'ENV_MISSING') {
             return res.status(500).json({ error: 'Server misconfigured: Supabase credentials missing' });

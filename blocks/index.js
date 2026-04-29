@@ -34,7 +34,7 @@ export function registerBlocks(editor) {
 
     // Load all blocks
     [
-        headerEfap, footerEfap,
+        headerEfap, footerEfap, icartBlocks,
         headerBrassart, footerBrassart,
         hero, twoColumn, richText, ctaButton, imageCaption, spacer,
         horizontalMenu, bandeRose, programmeList, programmeEditorial,
