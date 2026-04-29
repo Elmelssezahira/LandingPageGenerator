@@ -6,87 +6,7 @@ export default function (editor, categories) {
             <section class="form-core-section">
                 <!-- INJECTION DU SNIPPET SFMC POUR LE TRAITEMENT DU FORMULAIRE -->
                 <div class="sfmc-snippet-logic" id="i7g8au">
-                    <script runat="server">
-                    Platform.Load("core","1.1.1");
-
-                    /* ══════════════════════════════════════════════════════════════
-                       CONFIGURATION SALESFORCE CORE  —  à adapter
-                       ══════════════════════════════════════════════════════════════ */
-                    var SF_BASE_URL      = process.env.SF_BASE_URL;
-                    var SF_CLIENT_ID     = process.env.SF_CLIENT_ID;
-                    var SF_CLIENT_SECRET = process.env.SF_CLIENT_SECRET;
-
-                    /* ── Traitement uniquement si le formulaire est soumis ──────── */
-                    var submitted = Platform.Request.GetFormField("submitted");
-
-                    if (submitted == "true") {
-
-                      var firstName = Platform.Request.GetFormField("FirstName");
-                      var lastName  = Platform.Request.GetFormField("LastName");
-                      var email     = Platform.Request.GetFormField("EmailAddress");
-                      var school    = Platform.Request.GetFormField("SchoolId");
-
-                      try {
-
-                        /* ── 1. OAuth2 Client Credentials → Access Token ──────── */
-                        var tokenReq = new Script.Util.HttpRequest(
-                          SF_BASE_URL + "/services/oauth2/token"
-                        );
-                        tokenReq.method               = "POST";
-                        tokenReq.contentType          = "application/x-www-form-urlencoded";
-                        tokenReq.emptyContentHandling = 0;
-                        tokenReq.postData =
-                          "grant_type=client_credentials" +
-                          "&client_id="     + SF_CLIENT_ID +
-                          "&client_secret=" + SF_CLIENT_SECRET;
-
-                        var tokenRes  = tokenReq.send();
-                        var tokenJSON = Platform.Function.ParseJSON(String(tokenRes.content));
-
-                        if (tokenJSON.error) {
-                          throw "Auth failed: " + tokenJSON.error_description;
-                        }
-
-                        var accessToken = tokenJSON.access_token;
-                        var instanceUrl = tokenJSON.instance_url;
-
-                        /* ── 2. Création du Contact dans SF Core ──────────────── */
-                        var payload = Platform.Function.Stringify({
-                          "FirstName" : firstName,
-                          "LastName"  : lastName,
-                          "Email"     : email,
-                          "School__c" : school
-                        });
-
-                        var contactReq = new Script.Util.HttpRequest(
-                          instanceUrl + "/services/data/v60.0/sobjects/Contact/"
-                        );
-                        contactReq.method               = "POST";
-                        contactReq.contentType          = "application/json";
-                        contactReq.emptyContentHandling = 0;
-                        contactReq.setHeader("Authorization", "Bearer " + accessToken);
-                        contactReq.postData = payload;
-
-                        var contactRes  = contactReq.send();
-                        var contactJSON = Platform.Function.ParseJSON(String(contactRes.content));
-
-                        /* ── 3. Résultat ──────────────────────────────────────── */
-                        if (contactJSON.success == true) {
-                          Variable.SetValue("@sfStatus",    "success");
-                          Variable.SetValue("@sfContactId", contactJSON.id);
-                        } else {
-                          var apiErr = (contactJSON[0] && contactJSON[0].message)
-                            ? contactJSON[0].message
-                            : "Erreur API Salesforce";
-                          throw apiErr;
-                        }
-
-                      } catch (e) {
-                        Variable.SetValue("@sfStatus",   "error");
-                        Variable.SetValue("@sfErrorMsg", e.message ? e.message : String(e));
-                      }
-                    }
-                    </script>
+                    %%=ContentBlockByKey("LPB_Form_Handler_AG")=%%
                 </div>
                 <div class="form-core-container">
                     <div class="form-header-premium">
@@ -152,7 +72,8 @@ export default function (editor, categories) {
                         <div class="sfmc-msg sfmc-msg--success">
                             <i class="fas fa-check-circle"></i>
                             <div>
-                                <strong>Merci pour votre inscription !</strong><br />
+                                <strong>Merci pour votre inscription !</strong>
+
                                 Votre demande a bien été transmise à notre équipe. Nous vous contacterons prochainement pour confirmer votre visite.
                             </div>
                         </div>
@@ -162,7 +83,8 @@ export default function (editor, categories) {
                         <div class="sfmc-msg sfmc-msg--error">
                             <i class="fas fa-exclamation-circle"></i>
                             <div>
-                                <strong>Une erreur est survenue</strong><br />
+                                <strong>Une erreur est survenue</strong>
+
                                 Nous n'avons pas pu traiter votre demande. (%%=v(@sfErrorMsg)=%%)
                             </div>
                         </div>
@@ -180,69 +102,8 @@ export default function (editor, categories) {
                                 <option value="brassart">BRASSART</option>
                                 <option value="icart">ICART</option>
                                 <!-- INJECTION DU SNIPPET POUR LA PICKLIST DYNAMIQUE SFMC -->
-                                <script runat="server">
-                                Platform.Load("core","1.1.1");
-
-                                /* ════════════════════════════════════════════════════════════
-                                   CONFIGURATION SALESFORCE CORE  —  identique au Snippet 1
-                                   ════════════════════════════════════════════════════════════ */
-                                var SF_BASE_URL       = process.env.SF_BASE_URL;
-                                var SF_CLIENT_ID      = process.env.SF_CLIENT_ID;
-                                var SF_CLIENT_SECRET  = process.env.SF_CLIENT_SECRET;
-                                var SF_RECORD_TYPE_ID = process.env.SF_RECORD_TYPE_ID; /* RecordTypeId du type Contact */
-
-                                try {
-
-                                  /* ── 1. OAuth2 Client Credentials → Access Token ──────── */
-                                  var tokenReq = new Script.Util.HttpRequest(
-                                    SF_BASE_URL + "/services/oauth2/token"
-                                  );
-                                  tokenReq.method               = "POST";
-                                  tokenReq.contentType          = "application/x-www-form-urlencoded";
-                                  tokenReq.emptyContentHandling = 0;
-                                  tokenReq.postData =
-                                    "grant_type=client_credentials" +
-                                    "&client_id="     + SF_CLIENT_ID +
-                                    "&client_secret=" + SF_CLIENT_SECRET;
-
-                                  var tokenRes  = tokenReq.send();
-                                  var tokenJSON = Platform.Function.ParseJSON(String(tokenRes.content));
-
-                                  if (tokenJSON.error) throw tokenJSON.error_description;
-
-                                  var accessToken = tokenJSON.access_token;
-                                  var instanceUrl = tokenJSON.instance_url;
-
-                                  /* ── 2. Récupération picklist School__c ───────────────── */
-                                  var picklistUrl =
-                                    instanceUrl +
-                                    "/services/data/v60.0/ui-api/object-info/Contact/picklist-values/" +
-                                    SF_RECORD_TYPE_ID +
-                                    "/School__c";
-
-                                  var picklistReq = new Script.Util.HttpRequest(picklistUrl);
-                                  picklistReq.method               = "GET";
-                                  picklistReq.emptyContentHandling = 0;
-                                  picklistReq.setHeader("Authorization", "Bearer " + accessToken);
-
-                                  var picklistRes  = picklistReq.send();
-                                  var picklistJSON = Platform.Function.ParseJSON(String(picklistRes.content));
-
-                                  /* ── 3. Génération dynamique des <option> ─────────────── */
-                                  var values = picklistJSON.values;
-                                  for (var i = 0; i < values.length; i++) {
-                                    Write(
-                                      '<option value="' + values[i].value + '">' +
-                                        values[i].label +
-                                      '</option>'
-                                    );
-                                  }
-
-                                } catch (e) {
-                                  /* Silencieux : les options statiques ci-dessus servent de fallback */
-                                  Write('<!-- SF Core picklist indisponible : ' + (e.message || String(e)) + ' -->');
-                                }
-                                </script>
+                                
+                                %%=ContentBlockByKey("LPB_Picklist_Handler_AG")=%%
                             </select></div>
                         <div class="form-row">
                             <div class="form-group-core"><label>Nom</label><input type="text" name="LastName" required
