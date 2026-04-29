@@ -35,13 +35,12 @@ export function registerBlocks(editor) {
 
     // Load all blocks
     [
-        headerEfap, footerEfap,
+        headerEfap, footerEfap, icartBlocks,
         headerBrassart, footerBrassart,
         hero, twoColumn, richText, ctaButton, imageCaption, spacer,
         horizontalMenu, bandeRose, programmeList, programmeEditorial,
         troisRaisons, formSfmc, chiffresCles,
-        carousel, CarrouselTemoignages, CarrouselCampus,
-        icartBlocks
+        carousel, CarrouselTemoignages, CarrouselCampus
         
     ].forEach(blockInit => {
         if (typeof blockInit === 'function') {
